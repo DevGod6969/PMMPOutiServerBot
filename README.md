@@ -1,0 +1,3 @@
+# PMMPOutiServerBot
+
+おうち鯖用のPMMPDiscordBot

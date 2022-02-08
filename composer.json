@@ -1,0 +1,16 @@
+{
+    "name": "ken_cir/pmmpoutiserverbot",
+    "description": "おうち鯖用のPMMP DiscordBot",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "ken_cir\\pmmpoutiserverbot\\": "src/"
+        }
+    },
+    "require": {
+        "team-reflex/discord-php": "^6.0"
+    },
+    "require-dev": {
+        "pocketmine/pocketmine-mp": "^4.1"
+    }
+}

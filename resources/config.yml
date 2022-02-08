@@ -1,0 +1,11 @@
+# DiscordBotのトークン
+token: ""
+
+# DiscordのサーバーID
+guildId: ""
+
+# DiscordのコンソールチャンネルID
+consoleChannelId: ""
+
+# DiscordのチャットチャンネルID
+chatChannelId: ""
