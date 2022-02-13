@@ -13,13 +13,13 @@ use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\Config;
 use function count;
-use function ob_start;
-use function ob_get_contents;
-use function ob_flush;
 use function ob_end_clean;
+use function ob_flush;
+use function ob_get_contents;
+use function ob_start;
 use const PTHREADS_INHERIT_CONSTANTS;
 
-final class PMMPOutiServerBot extends PluginBase
+class PMMPOutiServerBot extends PluginBase
 {
     /**
      * @var PMMPOutiServerBot $this
@@ -47,8 +47,7 @@ final class PMMPOutiServerBot extends PluginBase
         foreach ($requestConfigParam as $key => $str) {
             if ($config->get($str, "") === "") {
                 $this->getLogger()->error("config.ymlの $str が設定されていません");
-            }
-            else {
+            } else {
                 unset($requestConfigParam[$key]);
             }
         }
@@ -70,7 +69,7 @@ final class PMMPOutiServerBot extends PluginBase
         );
 
         $this->getScheduler()->scheduleDelayedTask(new ClosureTask(
-            function() : void {
+            function (): void {
                 ob_start();
             }
         ), 10);
@@ -108,9 +107,16 @@ final class PMMPOutiServerBot extends PluginBase
                     PlayerDataManager::getInstance()->getXuid($playerCache->getXuid())->setDiscordUserid($discordVerify["userid"]);
                     $playerCache->setDiscordVerifyCode(null);
                     $playerCache->setDiscordverifycodeTime(null);
+                    $playerCache->setDiscordUserTag($discordVerify["username"]);
                     $this->discordBotThread->sendDiscordVerifyMessage($playerCache->getName(), $discordVerify["userid"]);
                     $onlineVerifyPlayer = Server::getInstance()->getPlayerByPrefix($playerCache->getName());
                     $onlineVerifyPlayer?->sendMessage("§a[システム] Discordアカウント {$discordVerify["username"]} と連携しました");
+                }
+
+                foreach ($this->discordBotThread->getAllUserTags() as $userTag) {
+                    $playerCache = PlayerCacheManager::getInstance()->getXuid($userTag["xuid"]);
+                    if (!$playerCache) continue;
+                    $playerCache->setDiscordUserTag($userTag["username"]);
                 }
             }
         ), 10, 10);

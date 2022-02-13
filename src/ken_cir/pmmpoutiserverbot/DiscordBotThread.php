@@ -22,13 +22,13 @@ use pocketmine\utils\TextFormat;
 use React\EventLoop\Factory;
 use Threaded;
 use function count;
-use function serialize;
-use function unserialize;
 use function preg_replace;
+use function serialize;
 use function strlen;
 use function substr;
+use function unserialize;
 
-final class DiscordBotThread extends Thread
+class DiscordBotThread extends Thread
 {
     private AttachableLogger $logger;
 
@@ -87,6 +87,14 @@ final class DiscordBotThread extends Thread
      */
     private Threaded $minecraftVerifyQueue;
 
+    /**
+     * Minecraft -> Discord
+     * の、Discord連携していた場合ユーザー名を取得するキュー
+     *
+     * @var Threaded
+     */
+    private Threaded $minecraftUserTagQueue;
+
     /** Discord -> Minecraft */
     /**
      * Discord -> Minecraft
@@ -111,6 +119,14 @@ final class DiscordBotThread extends Thread
      * @var Threaded
      */
     private Threaded $discordVerifyQueue;
+
+    /**
+     * Discord -> Minecraft
+     * の、Discord連携していた場合ユーザー名を取得するキュー
+     *
+     * @var Threaded
+     */
+    private Threaded $discordUserTagQueue;
 
     #[Pure] public function __construct(AttachableLogger $logger, string $dir, string $token, string $guildId, string $consoleChannelId, string $chatChannelId)
     {
@@ -146,8 +162,7 @@ final class DiscordBotThread extends Thread
                 'loadAllMembers' => true,
                 'intents' => Intents::GUILDS | Intents::GUILD_MESSAGES | Intents::DIRECT_MESSAGES | Intents::GUILD_MEMBERS
             ]);
-        }
-        catch (IntentException $exception) {
+        } catch (IntentException $exception) {
             $this->logger->error("File: {$exception->getFile()}\nLine: {$exception->getLine()}\nMessage: {$exception->getMessage()}\nTrace: {$exception->getTraceAsString()}");
             $this->logger->critical("DiscordBotのログインに失敗しました");
             unset($this->token);
@@ -186,14 +201,12 @@ final class DiscordBotThread extends Thread
                         "userid" => $message->author->id,
                         "username" => "{$message->author->username}#{$message->author->discriminator}"
                     ]);
-                }
-                // テキストチャンネル
+                } // テキストチャンネル
                 elseif ($message->channel->type === Channel::TYPE_TEXT) {
                     // コンソールチャンネルからのメッセージだった場合は
                     if ($message->channel_id === $this->consoleChannelId) {
                         $this->discordConsoleQueue[] = serialize($message->content);
-                    }
-                    // チャットチャンネルからのメッセージだった場合は
+                    } // チャットチャンネルからのメッセージだった場合は
                     elseif ($message->channel_id === $this->chatChannelId) {
                         $this->discordChatQueue[] = serialize([
                             "username" => "{$message->author->username}#{$message->author->discriminator}",
@@ -242,8 +255,17 @@ final class DiscordBotThread extends Thread
                 $user = $discord->users->get('id', $message["userid"]);
                 $user->sendMessage("Xboxアカウント {$message["name"]} と連携しました");
             }
-        }
-        catch (Error | Exception $exception) {
+
+            while (count($this->minecraftUserTagQueue) > 0) {
+                $userTag = unserialize($this->minecraftUserTagQueue->shift());
+                $user = $discord->users->get('id', $userTag["userid"]);
+                if (!$user) continue;
+                $this->discordUserTagQueue[] = serialize([
+                    "xuid" => $userTag["xuid"],
+                    "username" => "{$user->username}#{$user->discriminator}"
+                ]);
+            }
+        } catch (Error|Exception $exception) {
             $this->logger->error("File: {$exception->getFile()}\nLine: {$exception->getLine()}\nMessage: {$exception->getMessage()}\nTrace: {$exception->getTraceAsString()}");
         }
     }
@@ -262,6 +284,14 @@ final class DiscordBotThread extends Thread
     {
         $this->minecraftVerifyQueue[] = serialize([
             "name" => $name,
+            "userid" => $userid
+        ]);
+    }
+
+    public function addDiscordUserTag(string $xuid, string $userid): void
+    {
+        $this->minecraftUserTagQueue[] = serialize([
+            "xuid" => $xuid,
             "userid" => $userid
         ]);
     }
@@ -294,5 +324,15 @@ final class DiscordBotThread extends Thread
         }
 
         return $verifys;
+    }
+
+    public function getAllUserTags(): array
+    {
+        $userTags = [];
+        while (count($this->discordUserTagQueue) > 0) {
+            $userTags[] = unserialize($this->discordUserTagQueue->shift());
+        }
+
+        return $userTags;
     }
 }

@@ -4,13 +4,14 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "ken_cir\\pmmpoutiserverbot\\": "src/"
+            "": "src/"
         }
     },
     "require": {
-        "team-reflex/discord-php": "^6.0"
+        "team-reflex/discord-php": "^6.0",
+        "ext-pthreads": "*"
     },
     "require-dev": {
-        "pocketmine/pocketmine-mp": "^4.1"
+        "pocketmine/pocketmine-mp": "^4.2.0"
     }
 }

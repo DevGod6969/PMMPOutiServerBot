@@ -4,15 +4,31 @@ declare(strict_types=1);
 
 namespace ken_cir\pmmpoutiserverbot;
 
+use ken_cir\outiserversensouplugin\database\playerdata\PlayerDataManager;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 
-final class EventListener implements Listener
+class EventListener implements Listener
 {
     public function __construct()
     {
+    }
+
+    /**
+     * @priority MONITOR
+     *
+     * @param PlayerLoginEvent $event
+     * @return void
+     */
+    public function onPlayerLogin(PlayerLoginEvent $event): void
+    {
+        $player = $event->getPlayer();
+        if (($playerData = PlayerDataManager::getInstance()->getXuid($player->getXuid())) and $playerData->getDiscordUserid()) {
+            PMMPOutiServerBot::getInstance()->getDiscordBotThread()->addDiscordUserTag($player->getXuid(), $playerData->getDiscordUserid());
+        }
     }
 
     /**
