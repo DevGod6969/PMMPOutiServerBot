@@ -139,9 +139,11 @@ class DiscordBotThread extends Thread
         $this->minecraftConsoleQueue = new Threaded();
         $this->minecraftChatQueue = new Threaded();
         $this->minecraftVerifyQueue = new Threaded();
+        $this->minecraftUserTagQueue = new Threaded();
         $this->discordConsoleQueue = new Threaded();
         $this->discordChatQueue = new Threaded();
         $this->discordVerifyQueue = new Threaded();
+        $this->discordUserTagQueue = new Threaded();
     }
 
     protected function onRun(): void
@@ -228,6 +230,7 @@ class DiscordBotThread extends Thread
     private function task(Discord $discord)
     {
         try {
+            if (!$discord->user) return;
             $guild = $discord->guilds->get('id', $this->guildId);
             $consoleChannel = $guild->channels->get('id', $this->consoleChannelId);
             $chatChannel = $guild->channels->get('id', $this->chatChannelId);
@@ -320,7 +323,7 @@ class DiscordBotThread extends Thread
     {
         $verifys = [];
         while (count($this->discordVerifyQueue) > 0) {
-            $verifys = unserialize($this->discordVerifyQueue->shift());
+            $verifys[] = unserialize($this->discordVerifyQueue->shift());
         }
 
         return $verifys;
