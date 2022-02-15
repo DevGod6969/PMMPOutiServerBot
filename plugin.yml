@@ -3,7 +3,7 @@ main: ken_cir\pmmpoutiserverbot\PMMPOutiServerBot
 description: おうちサーバー用DiscordBot
 author: Ken_Cir
 version: 1.0.0
-api: 4.1.0
+api: 4.2.0
 extensions:
   - pthreads
   - json
